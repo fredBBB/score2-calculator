@@ -150,8 +150,7 @@
 
         <!-- Блок для результата -->
         <div id="result" class="result" style="display:none;">
-            <h3>Риск: <span id="risk-percentage"></span>%</h3>
-            <p id="risk-category"></p>
+            <h3>Риск: <span id="risk-percentage">{{ risk }}</span>%</h3>
         </div>
 
         <!-- Блок для ошибки -->
@@ -164,129 +163,56 @@
     </div>
 
     <script>
-        // Моментальная проверка ввода данных
-        document.getElementById("risk-form").addEventListener("input", function(event) {
-            validateInput(event.target);
-        });
-
+        // Останавливаем стандартную отправку формы
         document.getElementById("risk-form").addEventListener("submit", function(event) {
-            event.preventDefault(); // Останавливаем стандартное поведение формы
+            event.preventDefault();
             calculateRisk();
         });
 
-        document.getElementById("retry-btn").addEventListener("click", function() {
-            resetForm();
-        });
-
-        // Обнуляем поля формы при загрузке
-        window.onload = function() {
-            resetForm();
-        }
-
-        // Проверка корректности данных при вводе
-        function validateInput(input) {
-            if (input.id === "age") {
-                let errorElement = document.getElementById("age-error");
-                if (!/^[0-9]+$/.test(input.value) || input.value < 40 || input.value > 69) {
-                    input.classList.add("invalid");
-                    errorElement.textContent = "Возраст должен быть от 40 до 69 лет.";
-                } else {
-                    input.classList.remove("invalid");
-                    errorElement.textContent = "";
-                }
-            }
-            if (input.id === "cholesterol") {
-                let errorElement = document.getElementById("cholesterol-error");
-                if (!/^[0-9]+(\.[0-9]{1,2})?$/.test(input.value) || input.value < 3.0 || input.value > 6.9) {
-                    input.classList.add("invalid");
-                    errorElement.textContent = "Холестерин должен быть в пределах от 3.0 до 6.9 ммоль/л.";
-                } else {
-                    input.classList.remove("invalid");
-                    errorElement.textContent = "";
-                }
-            }
-            if (input.id === "bloodpressure") {
-                let errorElement = document.getElementById("bloodpressure-error");
-                if (!/^[0-9]+$/.test(input.value) || input.value < 100 || input.value > 179) {
-                    input.classList.add("invalid");
-                    errorElement.textContent = "Систолическое давление должно быть от 100 до 179 мм рт. ст.";
-                } else {
-                    input.classList.remove("invalid");
-                    errorElement.textContent = "";
-                }
-            }
-        }
-
         function calculateRisk() {
-            let age = parseInt(document.getElementById("age").value);
-            let gender = document.getElementById("gender").value;
-            let smokestatus = document.getElementById("smokestatus").value;
-            let cholesterol = parseFloat(document.getElementById("cholesterol").value);
-            let bloodpressure = parseInt(document.getElementById("bloodpressure").value);
-            let errorMessage = document.getElementById("error-message");
-            let resultDiv = document.getElementById("result");
-            let retryBtnContainer = document.getElementById("retry-btn-container");
-            let calculateBtn = document.getElementById("calculate-btn");
+            let form = document.getElementById("risk-form");
+            let formData = new FormData(form);
+            
+            fetch("/", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                // Предполагается, что сервер вернёт HTML с результатом
+                let resultDiv = document.getElementById("result");
+                resultDiv.style.display = "block";
 
-            // Проверка на корректность введенных данных
-            if (isNaN(age) || age < 40 || age > 69 || 
-                isNaN(cholesterol) || cholesterol < 3.0 || cholesterol > 6.9 || 
-                isNaN(bloodpressure) || bloodpressure < 100 || bloodpressure > 179) {
-                errorMessage.textContent = "Ошибка: Проверьте введенные данные.";
+                // Отображаем результат
+                let risk = data.match(/Риск: (\d+)/); // Замените это на соответствующую логику для извлечения данных
+                document.getElementById("risk-percentage").textContent = risk ? risk[1] : "Нет данных";
+
+                // Показать кнопку для повторного расчета
+                let retryBtnContainer = document.getElementById("retry-btn-container");
+                retryBtnContainer.style.display = "block";
+            })
+            .catch(error => {
+                console.error("Ошибка:", error);
+                let errorMessage = document.getElementById("error-message");
+                errorMessage.textContent = "Произошла ошибка при вычислении риска.";
                 errorMessage.style.display = "block";
-                resultDiv.style.display = "none";
-                retryBtnContainer.style.display = "none";
-                return;
-            } else {
-                errorMessage.style.display = "none";
-            }
-
-            // Пример расчета (в реальности заменить на таблицу)
-            let risk = (cholesterol * 1.5 + bloodpressure * 0.2) - (age * 0.3);
-            if (smokestatus === "Да") risk += 2;
-            if (gender === "М") risk += 1;
-
-            risk = Math.max(0, Math.min(risk.toFixed(1), 20)); // Ограничиваем от 0 до 20%
-
-            let riskCategory = risk < 5 ? "Низкий риск" :
-                               risk < 10 ? "Средний риск" :
-                               risk < 15 ? "Высокий риск" :
-                               "Очень высокий риск";
-
-            // Отображение результата
-            document.getElementById("risk-percentage").textContent = risk;
-            document.getElementById("risk-category").textContent = riskCategory;
-            resultDiv.style.display = "block";
-            retryBtnContainer.style.display = "block"; // Показываем кнопку для повторного расчета
-            calculateBtn.style.display = "none"; // Скрываем кнопку "Рассчитать риск"
+            });
         }
 
-        function resetForm() {
-            document.getElementById("risk-form").reset();
+        // Обработчик для кнопки "Рассчитать снова"
+        document.getElementById("retry-btn").addEventListener("click", function() {
+            // Скрыть результат и кнопку
             document.getElementById("result").style.display = "none";
-            document.getElementById("error-message").style.display = "none";
-            document.getElementById("retry-btn-container").style.display = "none"; // Прячем кнопку
-            // Убираем подсветку с полей и сообщения об ошибке
-            let inputs = document.querySelectorAll("input, select");
-            inputs.forEach(function(input) {
-                input.classList.remove("invalid");
-            });
-            let errorMessages = document.querySelectorAll(".error-message");
-            errorMessages.forEach(function(message) {
-                message.textContent = "";
-            });
-            // Показываем кнопку "Рассчитать риск" снова
-            document.getElementById("calculate-btn").style.display = "block";
-        }
+            document.getElementById("retry-btn-container").style.display = "none";
 
-        // Очищаем LocalStorage при выходе
-        window.onbeforeunload = function() {
-            localStorage.clear();
-        };
+            // Очистить форму
+            document.getElementById("risk-form").reset();
+        });
     </script>
 
 </body>
 </html>
+
 
 
 
