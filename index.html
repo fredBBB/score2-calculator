@@ -121,7 +121,7 @@
             <input type="text" id="bloodpressure" name="bloodpressure" required placeholder="100 - 179" autocomplete="off" autocapitalize="off" autocorrect="off">
             <div class="error-message" id="bloodpressure-error"></div><br>
 
-            <button type="submit">Рассчитать риск</button>
+            <button type="submit" id="calculate-btn">Рассчитать риск</button>
         </form>
 
         <!-- Блок для результата -->
@@ -202,6 +202,7 @@
             let errorMessage = document.getElementById("error-message");
             let resultDiv = document.getElementById("result");
             let retryBtnContainer = document.getElementById("retry-btn-container");
+            let calculateBtn = document.getElementById("calculate-btn");
 
             // Проверка на корректность введенных данных
             if (isNaN(age) || age < 40 || age > 69 || 
@@ -233,6 +234,7 @@
             document.getElementById("risk-category").textContent = riskCategory;
             resultDiv.style.display = "block";
             retryBtnContainer.style.display = "block"; // Показываем кнопку для повторного расчета
+            calculateBtn.style.display = "none"; // Скрываем кнопку "Рассчитать риск"
         }
 
         function resetForm() {
@@ -249,6 +251,8 @@
             errorMessages.forEach(function(message) {
                 message.textContent = "";
             });
+            // Показываем кнопку "Рассчитать риск" снова
+            document.getElementById("calculate-btn").style.display = "block";
         }
 
         // Очищаем LocalStorage при выходе
