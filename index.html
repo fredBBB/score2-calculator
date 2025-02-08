@@ -32,6 +32,7 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
             width: 100%;
             max-width: 600px;
+            box-sizing: border-box;
         }
         label {
             font-size: 16px;
@@ -85,6 +86,27 @@
             margin-top: 20px;
             text-align: center;
             display: none;
+        }
+
+        /* Мобильная версия */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                max-width: 100%;
+                padding: 15px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+            label {
+                font-size: 14px;
+            }
+            input, select, button {
+                font-size: 14px;
+                padding: 8px;
+            }
         }
     </style>
 </head>
