@@ -68,6 +68,11 @@
             font-weight: bold;
             text-align: center;
         }
+        .retry-btn-container {
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -104,13 +109,15 @@
         <div id="result" class="result" style="display:none;">
             <h3>Риск: <span id="risk-percentage"></span>%</h3>
             <p id="risk-category"></p>
-            <form id="retry-form">
-                <button type="submit">Рассчитать риск снова</button>
-            </form>
         </div>
 
         <!-- Блок для ошибки -->
         <p id="error-message" class="error" style="display:none;"></p>
+
+        <!-- Кнопка для повторного расчета -->
+        <div class="retry-btn-container" id="retry-btn-container">
+            <button id="retry-btn">Рассчитать риск снова</button>
+        </div>
     </div>
 
     <script>
@@ -119,8 +126,7 @@
             calculateRisk();
         });
 
-        document.getElementById("retry-form").addEventListener("submit", function(event) {
-            event.preventDefault();
+        document.getElementById("retry-btn").addEventListener("click", function() {
             resetForm();
         });
 
@@ -132,6 +138,7 @@
             let bloodpressure = parseInt(document.getElementById("bloodpressure").value);
             let errorMessage = document.getElementById("error-message");
             let resultDiv = document.getElementById("result");
+            let retryBtnContainer = document.getElementById("retry-btn-container");
 
             // Проверка на корректность введенных данных
             if (isNaN(age) || age < 40 || age > 69 || 
@@ -140,6 +147,7 @@
                 errorMessage.textContent = "Ошибка: Проверьте введенные данные.";
                 errorMessage.style.display = "block";
                 resultDiv.style.display = "none";
+                retryBtnContainer.style.display = "none";
                 return;
             } else {
                 errorMessage.style.display = "none";
@@ -161,17 +169,20 @@
             document.getElementById("risk-percentage").textContent = risk;
             document.getElementById("risk-category").textContent = riskCategory;
             resultDiv.style.display = "block";
+            retryBtnContainer.style.display = "block"; // Показываем кнопку для повторного расчета
         }
 
         function resetForm() {
             document.getElementById("risk-form").reset();
             document.getElementById("result").style.display = "none";
             document.getElementById("error-message").style.display = "none";
+            document.getElementById("retry-btn-container").style.display = "none"; // Прячем кнопку
         }
     </script>
 
 </body>
 </html>
+
 
 
 
