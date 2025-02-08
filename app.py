@@ -1,127 +1,178 @@
-from flask import Flask, render_template, request
-import csv
-import os
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор сердечно-сосудистого риска SCORE 2</title>
+    <style>
+        /* Темная тема */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #181818;
+            color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            flex-direction: column;
+        }
+        h1 {
+            text-align: center;
+            color: #f1f1f1;
+        }
+        .container {
+            background-color: #222;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 600px;
+        }
+        label {
+            font-size: 16px;
+            margin-bottom: 5px;
+            display: block;
+            color: #ccc;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #444;
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: #333;
+            color: #f4f4f4;
+        }
+        input:focus, select:focus, button:focus {
+            outline: none;
+            border-color: #666;
+        }
+        button {
+            background-color: #FF5A5A; /* Ярко-красно-розовый цвет */
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            border: 1px solid #FF5A5A; /* Тот же ярко-красно-розовый цвет для рамки */
+        }
+        button:hover {
+            background-color: #FF4C4C; /* Темнее, но все еще ярко-красный оттенок при наведении */
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background-color: #333;
+            text-align: center;
+        }
+        .result h3 {
+            font-size: 36px; /* Увеличиваем размер шрифта для текста с результатом */
+            margin: 0;
+        }
+        .result p {
+            font-size: 24px; /* Увеличиваем размер шрифта для категории риска */
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+            text-align: center;
+        }
+        .input-error {
+            border-color: #FF5A5A; /* Ярко-красно-розовый цвет */
+            background-color: #3f2f2f; /* Немного темный фон для подсвеченного поля */
+        }
+        .input-error:focus {
+            border-color: #FF4C4C; /* Более темный оттенок при фокусе */
+            background-color: #4a3c3c; /* Еще темнее фон при фокусе */
+        }
+    </style>
+</head>
+<body>
 
-app = Flask(__name__)
+    <div class="container">
+        <h1>Калькулятор сердечно-сосудистого риска SCORE 2</h1>
 
-# Функция для загрузки данных из CSV
-def load_risk_table():
-    filepath = os.path.join(os.path.dirname(__file__), "heart_risk_table.csv")
-    with open(filepath, mode="r", newline="", encoding="utf-8-sig") as file:
-        reader = csv.DictReader(file)
-        # Отладка: выводим заголовки и данные
-        print("Заголовки CSV:", reader.fieldnames)  # Выводим заголовки
-        data = list(reader)
-        print("Данные CSV:", data)  # Выводим содержимое
-        return data
+        <form id="risk-form" method="POST" onsubmit="return calculateRisk(event)">
+            <label for="age">Возраст:</label>
+            <input type="text" id="age" name="age" required placeholder="Введите возраст в диапазоне от 40 до 69 лет" autocomplete="off">
+            <div id="age-error" class="error-message"></div><br>
 
-# Функция для получения интервала возраста
-def get_age_interval(age):
-    age_ranges = [(40, 44), (45, 49), (50, 54), (55, 59), (60, 64), (65, 69)]
-    for start, end in age_ranges:
-        if start <= age <= end:
-            return f"{start}-{end}"
-    return None  
+            <label for="gender">Пол:</label>
+            <select name="gender" id="gender" autocomplete="off">
+                <option value="Ж">Женский</option>
+                <option value="М">Мужской</option>
+            </select><br>
 
-# Функция для получения интервала систолического АД
-def get_bp_interval(bloodpressure):
-    bp_ranges = [(100, 119), (120, 139), (140, 159), (160, 179)]
-    for start, end in bp_ranges:
-        if start <= bloodpressure <= end:
-            return f"{start}-{end}"
-    return None
+            <label for="smokestatus">Пациент курит?:</label>
+            <select name="smokestatus" id="smokestatus" autocomplete="off">
+                <option value="Да">Да</option>
+                <option value="Нет">Нет</option>
+            </select><br>
 
-# Функция для получения интервала уровня холестерина
-def get_cholesterol_interval(cholesterol):
-    cholesterol_ranges = [(3.0, 3.9), (4.0, 4.9), (5.0, 5.9), (6.0, 6.9)]
-    for start, end in cholesterol_ranges:
-        if start <= cholesterol <= end:
-            return f"{start}-{end}"
-    return None
+            <label for="cholesterol">Уровень холестерина не-ЛПВ (ммоль/л):</label>
+            <input type="text" id="cholesterol" name="cholesterol" required placeholder="Укажите уровень холестерина в диапазоне от 3.0 до 6.9" autocomplete="off">
+            <div id="cholesterol-error" class="error-message"></div><br>
 
-# Функция для поиска риска по данным
-def find_risk(age, bloodpressure, cholesterol, smokestatus, gender, risk_table): 
-    age = get_age_interval(age)
-    bloodpressure = get_bp_interval(bloodpressure)
-    cholesterol = get_cholesterol_interval(cholesterol)
+            <label for="bloodpressure">Систолическое давление:</label>
+            <input type="text" id="bloodpressure" name="bloodpressure" required placeholder="Укажите давление в диапазоне от 100 до 179" autocomplete="off">
+            <div id="bloodpressure-error" class="error-message"></div><br>
 
-    print(f"Ищем риск для возраста: {age}, давления: {bloodpressure}, холестерина: {cholesterol}, статус курения: {smokestatus}, пол: {gender}")
-    
-    for row in risk_table:
-        print(f"Текущая строка: {row}")  # Выводим строку из таблицы для отладки
-        if all(key in row for key in ["age", "bloodpressure", "cholesterol", "smokestatus", "gender"]):
-            if (row["age"].strip() == age and 
-                row["bloodpressure"].strip() == bloodpressure and 
-                row["cholesterol"].strip() == cholesterol and 
-                row["smokestatus"].strip().lower() == smokestatus.lower() and 
-                row["gender"].strip().upper() == gender.upper()):
-                return row["risk"]
-        else:
-            print("Ошибка: отсутствует ключ в строке")
-    
-    return "Нет данных"
+            <button type="submit" id="calculate-button">Рассчитать риск</button>
+        </form>
 
-# Функция для классификации риска
-def risk_classification(age, risk):  
-    try:
-        risk = float(risk)
-        if age < 50:
-            if risk < 2.5:
-                return "Низкий риск"
-            elif risk < 7.5:
-                return "Умеренный риск"
-            else:
-                return "Высокий риск"
-        elif 50 <= age <= 69:
-            if risk < 5:
-                return "Низкий риск"
-            elif risk < 10:
-                return "Умеренный риск"
-            else:
-                return "Высокий риск"
-        else:
-            return "Нет данных"
-    except ValueError:
-        return "Ошибка: некорректные данные"
+        <!-- Результаты или ошибка -->
+        <div id="result" class="result" style="display:none;">
+            <h3 id="result-risk"></h3>
+            <p id="result-category"></p>
+            <button onclick="resetForm()">Рассчитать снова</button>
+        </div>
 
-# Главная страница
-@app.route("/", methods=["GET", "POST"])
-def index():
-    if request.method == "POST":
-        try:
-            # Выводим данные формы в консоль для отладки
-            print(f"Received form data: {request.form}")
+        <p id="error-message" class="error" style="display:none;"></p>
+    </div>
 
-            # Получаем данные из формы
-            age = int(request.form["age"])
-            gender = request.form["gender"].upper()
-            smokestatus = request.form["smokestatus"].capitalize()
-            cholesterol = float(request.form["cholesterol"].replace(",", "."))
-            bloodpressure = int(request.form["bloodpressure"])
+    <script>
+        function calculateRisk(event) {
+            event.preventDefault(); // Предотвращаем отправку формы
 
-            # Загружаем таблицу с рисками
-            risk_table = load_risk_table()
+            let age = parseInt(document.getElementById("age").value);
+            let cholesterol = parseFloat(document.getElementById("cholesterol").value);
+            let bloodpressure = parseInt(document.getElementById("bloodpressure").value);
+            let smokestatus = document.getElementById("smokestatus").value;
+            let gender = document.getElementById("gender").value;
 
-            # Печатаем содержимое таблицы для отладки
-            print(f"Risk Table: {risk_table}")
+            // Простая логика расчета риска (пример, можно заменить на свою логику)
+            let risk = 0;
+            if (age >= 40 && age <= 69 && cholesterol >= 3.0 && cholesterol <= 6.9 && bloodpressure >= 100 && bloodpressure <= 179) {
+                risk = (age - 40) * 0.5 + (cholesterol - 3) * 1.5 + (bloodpressure - 100) * 0.3;
+                risk = Math.min(risk, 100); // Ограничиваем риск 100%
+            } else {
+                document.getElementById("error-message").style.display = 'block';
+                document.getElementById("error-message").textContent = "Пожалуйста, введите корректные данные.";
+                return;
+            }
 
-            # Ищем риск
-            risk = find_risk(age, bloodpressure, cholesterol, smokestatus, gender, risk_table)
+            let riskCategory = risk <= 10 ? "Низкий риск" : (risk <= 20 ? "Средний риск" : "Высокий риск");
 
-            # Выводим найденный риск для отладки
-            print(f"Calculated risk: {risk}")
+            // Показываем результаты
+            document.getElementById("result").style.display = 'block';
+            document.getElementById("result-risk").textContent = `Риск: ${risk.toFixed(2)}%`;
+            document.getElementById("result-category").textContent = riskCategory;
 
-            # Классифицируем риск
-            risk_category = risk_classification(age, risk)
+            // Скрываем сообщение об ошибке, если все прошло хорошо
+            document.getElementById("error-message").style.display = 'none';
+        }
 
-            # Отображаем результаты на странице
-            return render_template("index.html", risk=risk, risk_category=risk_category)
+        function resetForm() {
+            document.getElementById("risk-form").reset();
+            document.getElementById("result").style.display = 'none';
+            document.getElementById("error-message").style.display = 'none';
+        }
+    </script>
 
-        except ValueError as e:
-            print(f"Ошибка: {e}")  # Выводим ошибку в консоль
-            return render_template("index.html", error="Ошибка! Введите корректные данные.")
-    
-    return render_template("index.html", risk=None, risk_category=None)
-
-if __name__ == "__main__":
-    app.run(debug=True)
+</body>
+</html>
