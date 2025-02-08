@@ -51,6 +51,13 @@
         }
         input.invalid, select.invalid {
             border-color: red;
+            background-color: #4c4c4c;
+        }
+        input.invalid + .error-message, select.invalid + .error-message {
+            display: block;
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
         }
         button {
             background-color: #FF5A5A;
@@ -89,25 +96,30 @@
         <!-- Форма с автозаполнением отключена -->
         <form id="risk-form" autocomplete="off" method="POST">
             <label for="age">Возраст:</label>
-            <input type="text" id="age" name="age" required placeholder="40-69 лет" autocomplete="off" autocapitalize="off" autocorrect="off"><br>
+            <input type="text" id="age" name="age" required placeholder="40-69 лет" autocomplete="off" autocapitalize="off" autocorrect="off">
+            <div class="error-message" id="age-error"></div><br>
 
             <label for="gender">Пол:</label>
             <select name="gender" id="gender" autocomplete="off" autocapitalize="off" autocorrect="off">
                 <option value="Ж">Женский</option>
                 <option value="М">Мужской</option>
-            </select><br>
+            </select>
+            <div class="error-message" id="gender-error"></div><br>
 
             <label for="smokestatus">Пациент курит?:</label>
             <select name="smokestatus" id="smokestatus" autocomplete="off" autocapitalize="off" autocorrect="off">
                 <option value="Да">Да</option>
                 <option value="Нет">Нет</option>
-            </select><br>
+            </select>
+            <div class="error-message" id="smokestatus-error"></div><br>
 
             <label for="cholesterol">Холестерин (ммоль/л):</label>
-            <input type="text" id="cholesterol" name="cholesterol" required placeholder="3.0 - 6.9" autocomplete="off" autocapitalize="off" autocorrect="off"><br>
+            <input type="text" id="cholesterol" name="cholesterol" required placeholder="3.0 - 6.9" autocomplete="off" autocapitalize="off" autocorrect="off">
+            <div class="error-message" id="cholesterol-error"></div><br>
 
             <label for="bloodpressure">Систолическое давление:</label>
-            <input type="text" id="bloodpressure" name="bloodpressure" required placeholder="100 - 179" autocomplete="off" autocapitalize="off" autocorrect="off"><br>
+            <input type="text" id="bloodpressure" name="bloodpressure" required placeholder="100 - 179" autocomplete="off" autocapitalize="off" autocorrect="off">
+            <div class="error-message" id="bloodpressure-error"></div><br>
 
             <button type="submit">Рассчитать риск</button>
         </form>
@@ -150,24 +162,33 @@
         // Проверка корректности данных при вводе
         function validateInput(input) {
             if (input.id === "age") {
+                let errorElement = document.getElementById("age-error");
                 if (!/^[0-9]+$/.test(input.value) || input.value < 40 || input.value > 69) {
                     input.classList.add("invalid");
+                    errorElement.textContent = "Возраст должен быть от 40 до 69 лет.";
                 } else {
                     input.classList.remove("invalid");
+                    errorElement.textContent = "";
                 }
             }
             if (input.id === "cholesterol") {
+                let errorElement = document.getElementById("cholesterol-error");
                 if (!/^[0-9]+(\.[0-9]{1,2})?$/.test(input.value) || input.value < 3.0 || input.value > 6.9) {
                     input.classList.add("invalid");
+                    errorElement.textContent = "Холестерин должен быть в пределах от 3.0 до 6.9 ммоль/л.";
                 } else {
                     input.classList.remove("invalid");
+                    errorElement.textContent = "";
                 }
             }
             if (input.id === "bloodpressure") {
+                let errorElement = document.getElementById("bloodpressure-error");
                 if (!/^[0-9]+$/.test(input.value) || input.value < 100 || input.value > 179) {
                     input.classList.add("invalid");
+                    errorElement.textContent = "Систолическое давление должно быть от 100 до 179 мм рт. ст.";
                 } else {
                     input.classList.remove("invalid");
+                    errorElement.textContent = "";
                 }
             }
         }
@@ -219,10 +240,14 @@
             document.getElementById("result").style.display = "none";
             document.getElementById("error-message").style.display = "none";
             document.getElementById("retry-btn-container").style.display = "none"; // Прячем кнопку
-            // Убираем подсветку с полей
+            // Убираем подсветку с полей и сообщения об ошибке
             let inputs = document.querySelectorAll("input, select");
             inputs.forEach(function(input) {
                 input.classList.remove("invalid");
+            });
+            let errorMessages = document.querySelectorAll(".error-message");
+            errorMessages.forEach(function(message) {
+                message.textContent = "";
             });
         }
 
