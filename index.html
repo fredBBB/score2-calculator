@@ -46,10 +46,6 @@
             background-color: #333;
             color: #f4f4f4;
         }
-        input:focus, select:focus, button:focus {
-            outline: none;
-            border-color: #666;
-        }
         button {
             background-color: #FF5A5A;
             color: white;
@@ -67,34 +63,11 @@
             background-color: #333;
             text-align: center;
         }
-        .result h3 {
-            font-size: 36px;
-            margin: 0;
-        }
-        .result p {
-            font-size: 24px;
-            font-weight: bold;
-            margin-top: 10px;
-        }
         .error {
             color: red;
             font-weight: bold;
             text-align: center;
         }
-        .input-error {
-            border-color: #FF5A5A;
-            background-color: #3f2f2f;
-        }
-        .input-error:focus {
-            border-color: #FF4C4C;
-            background-color: #4a3c3c;
-        }
-        .error-message {
-            color: red;
-            font-size: 12px;
-            margin-top: 5px;
-        }
-
     </style>
 </head>
 <body>
@@ -105,7 +78,6 @@
         <form id="risk-form">
             <label for="age">Возраст:</label>
             <input type="text" id="age" name="age" required placeholder="40-69 лет"><br>
-            <div id="age-error" class="error-message"></div>
 
             <label for="gender">Пол:</label>
             <select name="gender" id="gender">
@@ -121,23 +93,35 @@
 
             <label for="cholesterol">Холестерин (ммоль/л):</label>
             <input type="text" id="cholesterol" name="cholesterol" required placeholder="3.0 - 6.9"><br>
-            <div id="cholesterol-error" class="error-message"></div>
 
             <label for="bloodpressure">Систолическое давление:</label>
             <input type="text" id="bloodpressure" name="bloodpressure" required placeholder="100 - 179"><br>
-            <div id="bloodpressure-error" class="error-message"></div>
 
             <button type="submit">Рассчитать риск</button>
         </form>
 
-        <div id="result" class="result" style="display:none;"></div>
+        <!-- Блок для результата -->
+        <div id="result" class="result" style="display:none;">
+            <h3>Риск: <span id="risk-percentage"></span>%</h3>
+            <p id="risk-category"></p>
+            <form id="retry-form">
+                <button type="submit">Рассчитать риск снова</button>
+            </form>
+        </div>
+
+        <!-- Блок для ошибки -->
         <p id="error-message" class="error" style="display:none;"></p>
     </div>
 
     <script>
         document.getElementById("risk-form").addEventListener("submit", function(event) {
-            event.preventDefault();
+            event.preventDefault(); // Останавливаем стандартное поведение формы
             calculateRisk();
+        });
+
+        document.getElementById("retry-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            resetForm();
         });
 
         function calculateRisk() {
@@ -166,54 +150,24 @@
             if (smokestatus === "Да") risk += 2;
             if (gender === "М") risk += 1;
 
-            risk = Math.max(0, Math.min(risk.toFixed(1), 20));
+            risk = Math.max(0, Math.min(risk.toFixed(1), 20)); // Ограничиваем от 0 до 20%
 
             let riskCategory = risk < 5 ? "Низкий риск" :
                                risk < 10 ? "Средний риск" :
                                risk < 15 ? "Высокий риск" :
                                "Очень высокий риск";
 
-            resultDiv.innerHTML = `<h3>Риск: ${risk}%</h3><p>${riskCategory}</p>`;
+            // Отображение результата
+            document.getElementById("risk-percentage").textContent = risk;
+            document.getElementById("risk-category").textContent = riskCategory;
             resultDiv.style.display = "block";
         }
 
-        // Валидация ввода данных
-        function validateAge() {
-            let age = document.getElementById("age").value;
-            if (isNaN(age) || age < 40 || age > 69) {
-                document.getElementById("age-error").textContent = "Возраст должен быть числом от 40 до 69";
-                document.getElementById("age").classList.add('input-error');
-            } else {
-                document.getElementById("age-error").textContent = "";
-                document.getElementById("age").classList.remove('input-error');
-            }
+        function resetForm() {
+            document.getElementById("risk-form").reset();
+            document.getElementById("result").style.display = "none";
+            document.getElementById("error-message").style.display = "none";
         }
-
-        function validateCholesterol() {
-            let cholesterol = document.getElementById("cholesterol").value;
-            if (isNaN(cholesterol) || cholesterol < 3.0 || cholesterol > 6.9) {
-                document.getElementById("cholesterol-error").textContent = "Холестерин должен быть в диапазоне от 3.0 до 6.9";
-                document.getElementById("cholesterol").classList.add('input-error');
-            } else {
-                document.getElementById("cholesterol-error").textContent = "";
-                document.getElementById("cholesterol").classList.remove('input-error');
-            }
-        }
-
-        function validateBloodPressure() {
-            let bloodpressure = document.getElementById("bloodpressure").value;
-            if (isNaN(bloodpressure) || bloodpressure < 100 || bloodpressure > 179) {
-                document.getElementById("bloodpressure-error").textContent = "Систолическое давление должно быть от 100 до 179";
-                document.getElementById("bloodpressure").classList.add('input-error');
-            } else {
-                document.getElementById("bloodpressure-error").textContent = "";
-                document.getElementById("bloodpressure").classList.remove('input-error');
-            }
-        }
-
-        document.getElementById("age").addEventListener("input", validateAge);
-        document.getElementById("cholesterol").addEventListener("input", validateCholesterol);
-        document.getElementById("bloodpressure").addEventListener("input", validateBloodPressure);
     </script>
 
 </body>
