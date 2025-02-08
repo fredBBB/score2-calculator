@@ -5,24 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Калькулятор сердечно-сосудистого риска SCORE 2</title>
     <style>
+        /* Темная тема */
         body {
             font-family: Arial, sans-serif;
             background-color: #181818;
             color: #f4f4f4;
+            margin: 0;
+            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            height: 100%;
             flex-direction: column;
+        }
+        h1 {
             text-align: center;
+            color: #f1f1f1;
         }
         .container {
             background-color: #222;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-            max-width: 600px;
             width: 100%;
+            max-width: 600px;
+        }
+        label {
+            font-size: 16px;
+            margin-bottom: 5px;
+            display: block;
+            color: #ccc;
         }
         input, select, button {
             width: 100%;
@@ -30,82 +42,118 @@
             margin: 8px 0;
             border: 1px solid #444;
             border-radius: 4px;
+            box-sizing: border-box;
             background-color: #333;
             color: #f4f4f4;
         }
         button {
             background-color: #FF5A5A;
+            color: white;
+            font-size: 16px;
             cursor: pointer;
+        }
+        button:hover {
+            background-color: #FF4C4C;
         }
         .result {
             margin-top: 20px;
             padding: 20px;
-            background-color: #333;
+            border: 1px solid #444;
             border-radius: 8px;
+            background-color: #333;
+            text-align: center;
         }
         .error {
             color: red;
+            font-weight: bold;
+            text-align: center;
         }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <h1>Калькулятор SCORE 2</h1>
+        <h1>Калькулятор сердечно-сосудистого риска SCORE 2</h1>
+
         <form id="risk-form">
-            <label>Возраст:</label>
-            <input type="number" id="age" min="40" max="69" required>
-            
-            <label>Пол:</label>
-            <select id="gender">
+            <label for="age">Возраст:</label>
+            <input type="text" id="age" name="age" required placeholder="40-69 лет"><br>
+
+            <label for="gender">Пол:</label>
+            <select name="gender" id="gender">
                 <option value="Ж">Женский</option>
                 <option value="М">Мужской</option>
-            </select>
-            
-            <label>Курение:</label>
-            <select id="smokestatus">
+            </select><br>
+
+            <label for="smokestatus">Пациент курит?:</label>
+            <select name="smokestatus" id="smokestatus">
                 <option value="Да">Да</option>
                 <option value="Нет">Нет</option>
-            </select>
-            
-            <label>Холестерин (ммоль/л):</label>
-            <input type="number" id="cholesterol" step="0.1" min="3.0" max="6.9" required>
-            
-            <label>Систолическое давление:</label>
-            <input type="number" id="bloodpressure" min="100" max="179" required>
-            
-            <button type="button" onclick="calculateRisk()">Рассчитать</button>
+            </select><br>
+
+            <label for="cholesterol">Холестерин (ммоль/л):</label>
+            <input type="text" id="cholesterol" name="cholesterol" required placeholder="3.0 - 6.9"><br>
+
+            <label for="bloodpressure">Систолическое давление:</label>
+            <input type="text" id="bloodpressure" name="bloodpressure" required placeholder="100 - 179"><br>
+
+            <button type="submit">Рассчитать риск</button>
         </form>
-        
+
+        <!-- Блок для результата -->
         <div id="result" class="result" style="display:none;"></div>
+
+        <!-- Блок для ошибки -->
+        <p id="error-message" class="error" style="display:none;"></p>
     </div>
 
     <script>
+        document.getElementById("risk-form").addEventListener("submit", function(event) {
+            event.preventDefault(); // Останавливаем стандартное поведение формы
+            calculateRisk();
+        });
+
         function calculateRisk() {
-            let age = document.getElementById('age').value;
-            let cholesterol = document.getElementById('cholesterol').value;
-            let bloodpressure = document.getElementById('bloodpressure').value;
-            let gender = document.getElementById('gender').value;
-            let smokestatus = document.getElementById('smokestatus').value;
-            
-            if (!age || !cholesterol || !bloodpressure) {
-                alert("Заполните все поля!");
+            let age = parseInt(document.getElementById("age").value);
+            let gender = document.getElementById("gender").value;
+            let smokestatus = document.getElementById("smokestatus").value;
+            let cholesterol = parseFloat(document.getElementById("cholesterol").value);
+            let bloodpressure = parseInt(document.getElementById("bloodpressure").value);
+            let errorMessage = document.getElementById("error-message");
+            let resultDiv = document.getElementById("result");
+
+            // Проверка на корректность введенных данных
+            if (isNaN(age) || age < 40 || age > 69 || 
+                isNaN(cholesterol) || cholesterol < 3.0 || cholesterol > 6.9 || 
+                isNaN(bloodpressure) || bloodpressure < 100 || bloodpressure > 179) {
+                errorMessage.textContent = "Ошибка: Проверьте введенные данные.";
+                errorMessage.style.display = "block";
+                resultDiv.style.display = "none";
                 return;
+            } else {
+                errorMessage.style.display = "none";
             }
-            
-            let risk = (parseFloat(age) * 0.1) + (parseFloat(cholesterol) * 1.2) + (parseFloat(bloodpressure) * 0.05);
-            if (smokestatus === "Да") risk += 5;
-            if (gender === "М") risk += 2;
-            
-            let category = "Низкий риск";
-            if (risk > 10) category = "Средний риск";
-            if (risk > 20) category = "Высокий риск";
-            
-            document.getElementById('result').innerHTML = `<h3>Риск: ${risk.toFixed(1)}%</h3><p>${category}</p>`;
-            document.getElementById('result').style.display = 'block';
+
+            // Пример расчета (в реальности заменить на таблицу)
+            let risk = (cholesterol * 1.5 + bloodpressure * 0.2) - (age * 0.3);
+            if (smokestatus === "Да") risk += 2;
+            if (gender === "М") risk += 1;
+
+            risk = Math.max(0, Math.min(risk.toFixed(1), 20)); // Ограничиваем от 0 до 20%
+
+            let riskCategory = risk < 5 ? "Низкий риск" :
+                               risk < 10 ? "Средний риск" :
+                               risk < 15 ? "Высокий риск" :
+                               "Очень высокий риск";
+
+            resultDiv.innerHTML = `<h3>Риск: ${risk}%</h3><p>${riskCategory}</p>`;
+            resultDiv.style.display = "block";
         }
     </script>
+
 </body>
 </html>
+
 
 
 
