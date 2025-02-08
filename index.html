@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Калькулятор сердечно-сосудистого риска SCORE 2</title>
     <style>
         /* Темная тема */
@@ -131,6 +134,11 @@
             resetForm();
         });
 
+        // Обнуляем поля формы при загрузке
+        window.onload = function() {
+            resetForm();
+        }
+
         function calculateRisk() {
             let age = parseInt(document.getElementById("age").value);
             let gender = document.getElementById("gender").value;
@@ -179,6 +187,11 @@
             document.getElementById("error-message").style.display = "none";
             document.getElementById("retry-btn-container").style.display = "none"; // Прячем кнопку
         }
+
+        // Очищаем LocalStorage при выходе
+        window.onbeforeunload = function() {
+            localStorage.clear();
+        };
     </script>
 
 </body>
