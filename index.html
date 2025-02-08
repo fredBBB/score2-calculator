@@ -49,6 +49,9 @@
             background-color: #333;
             color: #f4f4f4;
         }
+        input.invalid, select.invalid {
+            border-color: red;
+        }
         button {
             background-color: #FF5A5A;
             color: white;
@@ -125,6 +128,11 @@
     </div>
 
     <script>
+        // Моментальная проверка ввода данных
+        document.getElementById("risk-form").addEventListener("input", function(event) {
+            validateInput(event.target);
+        });
+
         document.getElementById("risk-form").addEventListener("submit", function(event) {
             event.preventDefault(); // Останавливаем стандартное поведение формы
             calculateRisk();
@@ -137,6 +145,31 @@
         // Обнуляем поля формы при загрузке
         window.onload = function() {
             resetForm();
+        }
+
+        // Проверка корректности данных при вводе
+        function validateInput(input) {
+            if (input.id === "age") {
+                if (!/^[0-9]+$/.test(input.value) || input.value < 40 || input.value > 69) {
+                    input.classList.add("invalid");
+                } else {
+                    input.classList.remove("invalid");
+                }
+            }
+            if (input.id === "cholesterol") {
+                if (!/^[0-9]+(\.[0-9]{1,2})?$/.test(input.value) || input.value < 3.0 || input.value > 6.9) {
+                    input.classList.add("invalid");
+                } else {
+                    input.classList.remove("invalid");
+                }
+            }
+            if (input.id === "bloodpressure") {
+                if (!/^[0-9]+$/.test(input.value) || input.value < 100 || input.value > 179) {
+                    input.classList.add("invalid");
+                } else {
+                    input.classList.remove("invalid");
+                }
+            }
         }
 
         function calculateRisk() {
@@ -186,6 +219,11 @@
             document.getElementById("result").style.display = "none";
             document.getElementById("error-message").style.display = "none";
             document.getElementById("retry-btn-container").style.display = "none"; // Прячем кнопку
+            // Убираем подсветку с полей
+            let inputs = document.querySelectorAll("input, select");
+            inputs.forEach(function(input) {
+                input.classList.remove("invalid");
+            });
         }
 
         // Очищаем LocalStorage при выходе
