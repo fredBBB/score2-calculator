@@ -90,30 +90,6 @@
             border-color: #FF4C4C; /* Более темный оттенок при фокусе */
             background-color: #4a3c3c; /* Еще темнее фон при фокусе */
         }
-        .error-message {
-            color: red;
-            font-size: 12px;
-            margin-top: 5px;
-        }
-
-        /* Кнопка для возврата наверх */
-        .scroll-to-top {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            padding: 15px;
-            font-size: 18px;
-            cursor: pointer;
-            display: none;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-        }
-        .scroll-to-top:hover {
-            background-color: #0056b3;
-        }
     </style>
 </head>
 <body>
@@ -121,7 +97,7 @@
     <div class="container">
         <h1>Калькулятор сердечно-сосудистого риска SCORE 2</h1>
 
-        <form id="risk-form" method="POST" onsubmit="return validateForm()">
+        <form id="risk-form" method="POST" onsubmit="return calculateRisk(event)">
             <label for="age">Возраст:</label>
             <input type="text" id="age" name="age" required placeholder="Введите возраст в диапазоне от 40 до 69 лет" autocomplete="off">
             <div id="age-error" class="error-message"></div><br>
@@ -150,154 +126,52 @@
         </form>
 
         <!-- Результаты или ошибка -->
-        {% if risk %}
-        <div class="result">
-            <h3>Риск: {{ risk }}%</h3>
-            <p>{{ risk_category }}</p>
-            <!-- Кнопка для расчета снова -->
-            <form action="/" method="GET">
-                <button type="submit">Рассчитать снова</button>
-            </form>
+        <div id="result" class="result" style="display:none;">
+            <h3 id="result-risk"></h3>
+            <p id="result-category"></p>
+            <button onclick="resetForm()">Рассчитать снова</button>
         </div>
-        {% endif %}
 
-        {% if error %}
-        <p class="error">{{ error }}</p>
-        {% endif %}
+        <p id="error-message" class="error" style="display:none;"></p>
     </div>
 
-    <!-- Кнопка для возврата наверх -->
-    <button class="scroll-to-top" onclick="scrollToTop()">↑</button>
-
     <script>
-        // Функция для возврата наверх
-        function scrollToTop() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        }
+        function calculateRisk(event) {
+            event.preventDefault(); // Предотвращаем отправку формы
 
-        // Показываем или скрываем кнопку "Наверх" в зависимости от прокрутки страницы
-        window.onscroll = function() {
-            let scrollButton = document.querySelector('.scroll-to-top');
-            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
-                scrollButton.style.display = 'block';
+            let age = parseInt(document.getElementById("age").value);
+            let cholesterol = parseFloat(document.getElementById("cholesterol").value);
+            let bloodpressure = parseInt(document.getElementById("bloodpressure").value);
+            let smokestatus = document.getElementById("smokestatus").value;
+            let gender = document.getElementById("gender").value;
+
+            // Простая логика расчета риска (пример, можно заменить на свою логику)
+            let risk = 0;
+            if (age >= 40 && age <= 69 && cholesterol >= 3.0 && cholesterol <= 6.9 && bloodpressure >= 100 && bloodpressure <= 179) {
+                risk = (age - 40) * 0.5 + (cholesterol - 3) * 1.5 + (bloodpressure - 100) * 0.3;
+                risk = Math.min(risk, 100); // Ограничиваем риск 100%
             } else {
-                scrollButton.style.display = 'none';
+                document.getElementById("error-message").style.display = 'block';
+                document.getElementById("error-message").textContent = "Пожалуйста, введите корректные данные.";
+                return;
             }
-        };
 
-        // Немедленная проверка данных
-        document.getElementById("age").addEventListener("input", validateAge);
-        document.getElementById("cholesterol").addEventListener("input", validateCholesterol);
-        document.getElementById("bloodpressure").addEventListener("input", validateBloodPressure);
+            let riskCategory = risk <= 10 ? "Низкий риск" : (risk <= 20 ? "Средний риск" : "Высокий риск");
 
-        // Проверка возраста
-        function validateAge() {
-            let age = document.getElementById("age").value;
-            if (isNaN(age) || age < 40 || age > 69) {
-                document.getElementById("age-error").textContent = "Возраст должен быть числом от 40 до 69";
-                document.getElementById("age").classList.add('input-error');
-            } else {
-                document.getElementById("age-error").textContent = "";
-                document.getElementById("age").classList.remove('input-error');
-            }
+            // Показываем результаты
+            document.getElementById("result").style.display = 'block';
+            document.getElementById("result-risk").textContent = `Риск: ${risk.toFixed(2)}%`;
+            document.getElementById("result-category").textContent = riskCategory;
+
+            // Скрываем сообщение об ошибке, если все прошло хорошо
+            document.getElementById("error-message").style.display = 'none';
         }
 
-        // Проверка уровня холестерина
-        function validateCholesterol() {
-            let cholesterol = document.getElementById("cholesterol").value;
-            if (isNaN(cholesterol) || cholesterol < 3.0 || cholesterol > 6.9) {
-                document.getElementById("cholesterol-error").textContent = "Уровень холестерина должен быть числом от 3.0 до 6.9";
-                document.getElementById("cholesterol").classList.add('input-error');
-            } else {
-                document.getElementById("cholesterol-error").textContent = "";
-                document.getElementById("cholesterol").classList.remove('input-error');
-            }
+        function resetForm() {
+            document.getElementById("risk-form").reset();
+            document.getElementById("result").style.display = 'none';
+            document.getElementById("error-message").style.display = 'none';
         }
-
-        // Проверка давления
-        function validateBloodPressure() {
-            let bloodpressure = document.getElementById("bloodpressure").value;
-            if (isNaN(bloodpressure) || bloodpressure < 100 || bloodpressure > 179) {
-                document.getElementById("bloodpressure-error").textContent = "Систолическое давление должно быть числом от 100 до 179";
-                document.getElementById("bloodpressure").classList.add('input-error');
-            } else {
-                document.getElementById("bloodpressure-error").textContent = "";
-                document.getElementById("bloodpressure").classList.remove('input-error');
-            }
-        }
-
-        function validateForm() {
-            let valid = true;
-
-            // Проверка возраста
-            validateAge();
-            // Проверка холестерина
-            validateCholesterol();
-            // Проверка давления
-            validateBloodPressure();
-
-            // Если есть ошибки, не разрешаем отправить форму
-            if (document.querySelectorAll('.input-error').length > 0) {
-                valid = false;
-            }
-
-            return valid;
-        }
-
-        // Сохранение значений в локальное хранилище перед отправкой формы
-        document.getElementById("risk-form").addEventListener("submit", function() {
-            localStorage.setItem('age', document.getElementById('age').value);
-            localStorage.setItem('cholesterol', document.getElementById('cholesterol').value);
-            localStorage.setItem('bloodpressure', document.getElementById('bloodpressure').value);
-            localStorage.setItem('gender', document.getElementById('gender').value);
-            localStorage.setItem('smokestatus', document.getElementById('smokestatus').value);
-        });
-
-        // Заполнение значений из локального хранилища при загрузке страницы
-        window.onload = function() {
-            // Очистить localStorage при загрузке страницы
-            localStorage.clear();
-
-            // Заполнить поля значениями, если они были ранее сохранены в localStorage
-            if (localStorage.getItem('age')) {
-                document.getElementById('age').value = localStorage.getItem('age');
-            }
-            if (localStorage.getItem('cholesterol')) {
-                document.getElementById('cholesterol').value = localStorage.getItem('cholesterol');
-            }
-            if (localStorage.getItem('bloodpressure')) {
-                document.getElementById('bloodpressure').value = localStorage.getItem('bloodpressure');
-            }
-            if (localStorage.getItem('gender')) {
-                document.getElementById('gender').value = localStorage.getItem('gender');
-            }
-            if (localStorage.getItem('smokestatus')) {
-                document.getElementById('smokestatus').value = localStorage.getItem('smokestatus');
-            }
-        };
-
-        // Очистка полей формы при нажатии на кнопку "Рассчитать снова"
-        document.querySelector('form[action="/"] button').addEventListener('click', function() {
-            document.getElementById('age').value = '';
-            document.getElementById('cholesterol').value = '';
-            document.getElementById('bloodpressure').value = '';
-            document.getElementById('gender').value = 'Ж';
-            document.getElementById('smokestatus').value = 'Нет';
-
-            // Удаляем сообщения об ошибках
-            document.getElementById('age-error').textContent = '';
-            document.getElementById('cholesterol-error').textContent = '';
-            document.getElementById('bloodpressure-error').textContent = '';
-
-            // Убираем классы ошибок
-            document.getElementById('age').classList.remove('input-error');
-            document.getElementById('cholesterol').classList.remove('input-error');
-            document.getElementById('bloodpressure').classList.remove('input-error');
-        });
-
     </script>
 
 </body>
